@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Facturas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #4a5568;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .company-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .product-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-add {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .btn-add:hover {
+            background: #38a169;
+        }
+        
+        .btn-delete {
+            background: #f56565;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .btn-delete:hover {
+            background: #e53e3e;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .product-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-add {
+                width: 100%;
+            }
+            
+            .company-name {
+                font-size: 24px;
+            }
+        }
+        
+        .products-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            overflow-x: auto;
+            display: block;
+        }
+        
+        .products-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .products-table th,
+        .products-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .products-table th {
+            background: #edf2f7;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .products-table tr:hover {
+            background: #f7fafc;
+        }
+        
+        @media (max-width: 768px) {
+            .products-table th,
+            .products-table td {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .btn-delete {
+                padding: 3px 6px;
+                font-size: 10px;
+            }
+        }
+        
+        .total-section {
+            text-align: right;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #2d3748;
+        }
+        
+        .total {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-export {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .btn-export:hover {
+            background: #5a67d8;
+        }
+        
+        @media (max-width: 768px) {
+            .btn-export {
+                width: 100%;
+                min-width: unset;
+            }
+        }
+        
+        .invoice {
+            display: none;
+            background: white;
+            padding: 40px;
+            max-width: 800px;
+        }
+        
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #2d3748;
+            padding-bottom: 20px;
+        }
+        
+        .invoice-info {
+            margin-bottom: 30px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="company-name">ADELACT</div>
+            <h1>Generador de Documentos</h1>
+        </div>
+        
+        <div class="content">
+            <div class="form-section">
+                <h2>Tipo de Documento</h2>
+                <div class="form-group">
+                    <label>Seleccione:</label>
+                    <select id="documentType">
+                        <option value="factura">Factura</option>
+                        <option value="cotizacion">Cotización</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Información General</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nombre del Cliente:</label>
+                        <input type="text" id="clientName" placeholder="Ingrese el nombre del cliente">
+                    </div>
+                    <div class="form-group">
+                        <label>Atendido por:</label>
+                        <input type="text" id="attendedBy" placeholder="Su nombre">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Agregar Productos</h2>
+                <div class="product-form">
+                    <div class="form-group">
+                        <label>Producto:</label>
+                        <input type="text" id="productName" placeholder="Nombre del producto">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio:</label>
+                        <input type="number" id="productPrice" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Cantidad:</label>
+                        <input type="number" id="productQty" placeholder="1" min="1" value="1">
+                    </div>
+                    <button class="btn-add" onclick="addProduct()">Agregar</button>
+                </div>
+            </div>
+            
+            <div id="productsSection">
+                <div class="empty-state">
+                    <p>No hay productos agregados. Comience agregando productos arriba.</p>
+                </div>
+            </div>
+            
+            <div class="export-buttons">
+                <button class="btn-export" onclick="exportAsImage()">Descargar como Imagen</button>
+                <button class="btn-export" onclick="exportAsPDF()">Descargar como PDF</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="invoice" class="invoice">
+        <div class="invoice-header">
+            <div class="company-name" style="color: #2d3748; margin-bottom: 10px;">ADELACT</div>
+            <h1 id="documentTypeTitle">FACTURA</h1>
+            <p>Fecha: <span id="invoiceDate"></span></p>
+        </div>
+        <div class="invoice-info">
+            <p><strong>Cliente:</strong> <span id="invoiceClient"></span></p>
+            <p><strong>Atendido por:</strong> <span id="invoiceAttendedBy"></span></p>
+        </div>
+        <table class="products-table" id="invoiceTable"></table>
+        <div class="total-section">
+            <p class="total">TOTAL: L. <span id="invoiceTotal">0.00</span></p>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const qty = parseInt(document.getElementById('productQty').value);
+            
+            if (!name || !price || !qty) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+            
+            products.push({
+                name: name,
+                price: price,
+                quantity: qty,
+                subtotal: price * qty
+            });
+            
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productQty').value = '1';
+            
+            renderProducts();
+        }
+        
+        function deleteProduct(index) {
+            products.splice(index, 1);
+            renderProducts();
+        }
+        
+        function renderProducts() {
+            const section = document.getElementById('productsSection');
+            
+            if (products.length === 0) {
+                section.innerHTML = '<div class="empty-state"><p>No hay productos agregados. Comience agregando productos arriba.</p></div>';
+                return;
+            }
+            
+            let total = 0;
+            let html = '<table class="products-table"><thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th>Acción</th></tr></thead><tbody>';
+            
+            products.forEach((product, index) => {
+                total += product.subtotal;
+                html += `<tr>
+                    <td>${product.name}</td>
+                    <td>L.${product.price.toFixed(2)}</td>
+                    <td>${product.quantity}</td>
+                    <td>L.${product.subtotal.toFixed(2)}</td>
+                    <td><button class="btn-delete" onclick="deleteProduct(${index})">Eliminar</button></td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            html += `<div class="total-section"><p class="total">TOTAL: L.${total.toFixed(2)}</p></div>`;
+            
+            section.innerHTML = html;
+        }
+        
+        function prepareInvoice() {
+            const clientName = document.getElementById('clientName').value || 'Cliente General';
+            const attendedBy = document.getElementById('attendedBy').value || 'ADELACT';
+            const documentType = document.getElementById('documentType').value;
+            const date = new Date().toLocaleDateString('es-ES');
+            
+            document.getElementById('invoiceClient').textContent = clientName;
+            document.getElementById('invoiceAttendedBy').textContent = attendedBy;
+            document.getElementById('invoiceDate').textContent = date;
+            document.getElementById('documentTypeTitle').textContent = documentType === 'factura' ? 'FACTURA' : 'COTIZACIÓN';
+            
+            let total = 0;
+            let tableHTML = '<thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th></tr></thead><tbody>';
+            
+            products.forEach(product => {
+                total += product.subtotal;
+                tableHTML += `<tr>
+                    <td>${product.name}</td>
+                    <td>${product.price.toFixed(2)}</td>
+                    <td>${product.quantity}</td>
+                    <td>${product.subtotal.toFixed(2)}</td>
+                </tr>`;
+            });
+            
+            tableHTML += '</tbody>';
+            document.getElementById('invoiceTable').innerHTML = tableHTML;
+            document.getElementById('invoiceTotal').textContent = total.toFixed(2);
+        }
+        
+        async function exportAsImage() {
+            if (products.length === 0) {
+                alert('Agregue al menos un producto antes de exportar');
+                return;
+            }
+            
+            prepareInvoice();
+            const invoice = document.getElementById('invoice');
+            invoice.style.display = 'block';
+            
+            const canvas = await html2canvas(invoice);
+            invoice.style.display = 'none';
+            
+            const documentType = document.getElementById('documentType').value;
+            const fileName = documentType === 'factura' ? 'factura.png' : 'cotizacion.png';
+            
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        async function exportAsPDF() {
+            if (products.length === 0) {
+                alert('Agregue al menos un producto antes de exportar');
+                return;
+            }
+            
+            prepareInvoice();
+            const invoice = document.getElementById('invoice');
+            invoice.style.display = 'block';
+            
+            const canvas = await html2canvas(invoice);
+            invoice.style.display = 'none';
+            
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            const imgWidth = 210;
+            const imgHeight = canvas.height * imgWidth / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            
+            const documentType = document.getElementById('documentType').value;
+            const fileName = documentType === 'factura' ? 'factura.pdf' : 'cotizacion.pdf';
+            
+            pdf.save(fileName);
+        }
+    </script>
+</body>
+</html>
