@@ -162,7 +162,7 @@
                                     </svg>
                                     <div>
                                         <h2 class="text-4xl font-black mb-1">ADELACT</h2>
-                                        <p class="text-blue-100 tracking-wide uppercase text-sm">Productos Lácteos Premium</p>
+                                        <p class="text-blue-100 tracking-wide uppercase text-sm">Productos Lácteos</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
@@ -260,10 +260,8 @@
     <script>
         let productos = [];
         
-        // --- Lógica de Fecha y Hora para Tegucigalpa, Honduras ---
         function establecerFechaYHoraLocal() {
             const now = new Date();
-            // Para la fecha del input, ajustamos a la zona horaria local para evitar desfaces al mostrar
             const offset = now.getTimezoneOffset();
             const localDate = new Date(now.getTime() - (offset * 60 * 1000));
             document.getElementById('fecha').value = localDate.toISOString().split('T')[0];
@@ -274,17 +272,14 @@
         function actualizarDisplayFechaYHora() {
             const fechaVal = document.getElementById('fecha').value;
             if (fechaVal) {
-                // Crear una fecha en la zona horaria de Honduras (GMT-6)
-                // Usamos Intl.DateTimeFormat para el control completo de zona horaria y formato
                 const optionsDate = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'America/Tegucigalpa' };
                 const optionsTime = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Tegucigalpa' };
 
-                const dateToFormat = new Date(fechaVal); // Base date for formatting
+                const dateToFormat = new Date(fechaVal);
                 
                 document.getElementById('displayFecha').textContent = 
                     new Intl.DateTimeFormat('es-HN', optionsDate).format(dateToFormat);
                 
-                // Para la hora, obtener la hora actual de Tegucigalpa
                 const nowTegucigalpa = new Date().toLocaleString('en-US', { timeZone: 'America/Tegucigalpa' });
                 const horaTegucigalpa = new Date(nowTegucigalpa).toLocaleTimeString('es-HN', { hour: '2-digit', minute: '2-digit', hour12: false });
                 document.getElementById('displayHora').textContent = horaTegucigalpa;
@@ -294,7 +289,6 @@
 
         establecerFechaYHoraLocal();
 
-        // Event Listeners
         document.getElementById('numeroFactura').addEventListener('input', e => {
             document.getElementById('displayNumeroFactura').textContent = e.target.value || '---';
         });
@@ -312,8 +306,8 @@
         document.getElementById('tipoDocumento').addEventListener('change', e => {
             const tipo = e.target.value;
             const label = document.getElementById('labelTipoDoc');
-            document.getElementById('displayTipoDocumento').textContent = tipo; // Actualizar el título principal
-            label.textContent = tipo + ' No.'; // Actualizar el label del número
+            document.getElementById('displayTipoDocumento').textContent = tipo;
+            label.textContent = tipo + ' No.';
         });
 
         document.getElementById('selectProducto').addEventListener('change', function() {
@@ -325,10 +319,10 @@
                 nombreInput.focus();
             } else {
                 campoNombre.style.display = 'none';
-                nombreInput.value = this.value; // Pre-llenar si no es "otro"
+                nombreInput.value = this.value; 
             }
-            document.getElementById('precioUnitario').value = '0'; // Limpiar precio al cambiar producto
-            document.getElementById('cantidad').value = '1'; // Resetear cantidad
+            document.getElementById('precioUnitario').value = '0'; 
+            document.getElementById('cantidad').value = '1'; 
             document.getElementById('precioUnitario').focus();
         });
 
@@ -346,7 +340,6 @@
             productos.push({ id: Date.now(), nombre, precio, cantidad, subtotal: precio * cantidad });
             actualizarUI();
             
-            // Reset campos
             select.value = "";
             document.getElementById('nombreProducto').value = '';
             document.getElementById('campoNombreProducto').style.display = 'none';
@@ -408,7 +401,6 @@
             const facturaElement = document.getElementById('facturaPreview');
             
             try {
-                // Mostrar mensaje de carga
                 const botonOriginal = event.target.closest('button');
                 const textoOriginal = botonOriginal.innerHTML;
                 botonOriginal.innerHTML = `
@@ -420,10 +412,10 @@
                 botonOriginal.disabled = true;
 
                 const canvas = await html2canvas(facturaElement, {
-                    scale: 2, // Aumenta la resolución
+                    scale: 2, 
                     backgroundColor: '#ffffff',
                     logging: false,
-                    useCORS: true // Esencial si tienes imágenes o fuentes de CDN
+                    useCORS: true 
                 });
 
                 canvas.toBlob(function(blob) {
@@ -437,8 +429,6 @@
                     link.click();
                     document.body.removeChild(link);
                     URL.revokeObjectURL(url);
-
-                    // Restaurar botón
                     botonOriginal.innerHTML = textoOriginal;
                     botonOriginal.disabled = false;
                 }, 'image/png');
@@ -447,7 +437,6 @@
                 console.error('Error al generar imagen:', error);
                 alert('Hubo un error al generar la imagen. Por favor intenta de nuevo.');
                 
-                // Restaurar botón en caso de error
                 const botonOriginal = event.target.closest('button');
                 botonOriginal.innerHTML = textoOriginal;
                 botonOriginal.disabled = false;
@@ -462,8 +451,8 @@
             document.getElementById('numeroFactura').value = '';
             document.getElementById('socioAtiende').value = '';
             document.getElementById('cliente').value = '';
-            document.getElementById('tipoDocumento').value = 'FACTURA'; // Reiniciar a factura
-            establecerFechaYHoraLocal(); // Reiniciar fecha y hora
+            document.getElementById('tipoDocumento').value = 'FACTURA'; 
+            establecerFechaYHoraLocal();
             productos = [];
             
             document.getElementById('displayNumeroFactura').textContent = '---';
@@ -473,9 +462,8 @@
             actualizarUI();
         }
 
-        // Inicializar la UI al cargar
         actualizarUI();
-        document.getElementById('tipoDocumento').dispatchEvent(new Event('change')); // Para que el label se actualice al inicio
+        document.getElementById('tipoDocumento').dispatchEvent(new Event('change')); 
     </script>
 </body>
 </html>
